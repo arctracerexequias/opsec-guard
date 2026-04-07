@@ -85,5 +85,26 @@ def scan(
     run_scan(device_id=device_id)
 
 
+@maid_app.command("fetch")
+def fetch(
+    query: str = typer.Argument(..., help="App name or package ID to look up."),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass local cache and force fresh fetch."),
+    sources_only: bool = typer.Option(False, "--sources", "-s", help="Show source availability status."),
+    set_appcensus_key: str = typer.Option(None, "--set-appcensus-key",
+                                           help="Save an AppCensus API key for dynamic analysis."),
+    clear_cache: bool = typer.Option(False, "--clear-cache", help="Clear all cached fetch results."),
+) -> None:
+    """Fetch live MAID risk data from Exodus, Google Play, App Store, and AppCensus."""
+    from opsec_guard.commands.fetch import run_fetch, run_set_appcensus_key, run_clear_cache
+    banner()
+    if set_appcensus_key:
+        run_set_appcensus_key(set_appcensus_key)
+        return
+    if clear_cache:
+        run_clear_cache()
+        return
+    run_fetch(query=query, no_cache=no_cache, sources_only=sources_only)
+
+
 if __name__ == "__main__":
     app()

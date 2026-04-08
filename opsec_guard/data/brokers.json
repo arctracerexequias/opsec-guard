@@ -107,6 +107,24 @@
       "opt_out_url": "https://optout.lexisnexis.com/",
       "incident": "Sells MAID-linked identity resolution and location history to law enforcement. Data used in predictive policing systems.",
       "sources": ["Electronic Frontier Foundation analysis 2021"]
+    },
+    {
+      "name": "Fog Riville (Fog Data Science)",
+      "risk": "critical",
+      "data_types": ["MAID", "precise GPS", "movement history", "pattern-of-life analysis"],
+      "known_clients": ["US federal law enforcement", "local police departments", "immigration enforcement"],
+      "opt_out_url": null,
+      "incident": "Sells a product called 'Fog Reveal' — a web-based tool allowing law enforcement to search MAID-linked location histories of millions of devices. Marketed as requiring no warrant. Used to build pattern-of-life profiles on individuals by querying their MAID movement history. Named specifically in the Le Monde/French investigation into advertising ID surveillance ecosystems.",
+      "sources": ["EFF investigation August 2022", "Associated Press August 2022", "Le Monde MAID investigation 2024"]
+    },
+    {
+      "name": "Locate X (Babel Street)",
+      "risk": "critical",
+      "data_types": ["MAID", "real-time GPS", "historical movement", "geofence queries"],
+      "known_clients": ["US Secret Service", "DHS", "CBP", "FBI", "military intelligence units"],
+      "opt_out_url": null,
+      "incident": "Real-time MAID tracking platform sold exclusively to government and law enforcement. Allows geofence queries — 'show me every MAID that entered this building in the last 30 days.' Used to track visitors to abortion clinics, mosques, and protest sites. Named in Le Monde investigation alongside Fog Riville as commercial MAID surveillance products.",
+      "sources": ["Vice/Motherboard February 2020", "Protocol 2021", "Le Monde MAID investigation 2024"]
     }
   ]
 }

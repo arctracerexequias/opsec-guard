@@ -106,5 +106,26 @@ def fetch(
     run_fetch(query=query, no_cache=no_cache, sources_only=sources_only)
 
 
+@maid_app.command("techniques")
+def techniques(
+    name: str = typer.Argument(None, help="Technique name to look up (e.g. RTB, geofencing, zero-click). Shows all if omitted."),
+) -> None:
+    """Explain MAID surveillance techniques: RTB, geofencing, BLE, fingerprinting, zero-click malware."""
+    from opsec_guard.commands.techniques import run_techniques
+    banner()
+    run_techniques(name=name)
+
+
+@maid_app.command("org")
+def org(
+    section: str = typer.Option(None, "--section", "-s",
+                                 help="Section: personnel, device, network, incident, legal, all"),
+) -> None:
+    """Organizational & government-level OPSEC policies. Covers PH DPA, GDPR, MDM, incident response."""
+    from opsec_guard.commands.org import run_org
+    banner()
+    run_org(section=section)
+
+
 if __name__ == "__main__":
     app()

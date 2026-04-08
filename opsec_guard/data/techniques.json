@@ -1,123 +1,198 @@
-{
-  "techniques": [
-    {
-      "name": "Real-Time Bidding (RTB)",
-      "category": "ad ecosystem",
-      "precision": "city/neighborhood level",
-      "risk": "critical",
-      "summary": "The core mechanism by which MAIDs are distributed at scale. Every time a mobile app loads an ad, an auction runs in under 100 milliseconds. The auction broadcast — called a 'bid request' — contains the device's MAID, precise GPS coordinates, app name, and behavioral data. This broadcast is sent simultaneously to hundreds of ad buyers. Even buyers who lose the auction receive the MAID+GPS data. Bid stream data is harvested, stored, and sold by data brokers. A single user generating 100 ad impressions per day exposes their MAID to thousands of companies per week without any interaction.",
-      "how_it_works": [
-        "1. User opens an app containing an ad SDK.",
-        "2. The SDK sends a bid request to an ad exchange (Google, OpenX, AppNexus, etc.).",
-        "3. The bid request contains: MAID, GPS coordinates, app ID, device info, behavioral profile.",
-        "4. The exchange broadcasts this to 200–500 demand-side platforms (DSPs) simultaneously.",
-        "5. Each DSP bids or passes — but ALL receive the full bid request including MAID+GPS.",
-        "6. The winning bidder serves the ad. Losing bidders retain the data.",
-        "7. Data brokers harvest bid stream data from multiple exchanges and aggregate it.",
-        "8. The result: a movement history linked to the MAID, built passively from ad impressions."
-      ],
-      "real_world_impact": "The Le Monde investigation into 16 million French advertising IDs was built on bid stream data. Intelligence personnel's MAIDs appeared in RTB data because their personal phones ran apps with embedded ad SDKs.",
-      "mitigation": "Delete or reset MAID. Enable ATT on iOS. Opt out of ad personalization on Android. Use apps without advertising SDKs."
-    },
-    {
-      "name": "Geofencing",
-      "category": "proximity targeting",
-      "precision": "5–50 meters",
-      "risk": "high",
-      "summary": "Defines a virtual geographic boundary. Any device entering the boundary is flagged, tracked, or served targeted content. Used by advertisers to target people near stores, but also weaponized by data brokers to build lists of MAIDs that visited sensitive locations — military bases, government buildings, intelligence agency headquarters, places of worship, medical clinics.",
-      "how_it_works": [
-        "1. Advertiser or broker defines a geographic polygon (GPS coordinates).",
-        "2. Ad platform matches incoming bid requests against the polygon in real time.",
-        "3. Any MAID whose GPS coordinates fall inside the polygon is flagged.",
-        "4. The MAID is added to a custom audience list or location history.",
-        "5. The list can be used for ad targeting, identity resolution, or sold to third parties."
-      ],
-      "real_world_impact": "Locate X and Fog Riville use geofence queries as their primary interface. Law enforcement queries: 'Show me every MAID that entered this building between these dates.' French intelligence operatives were identified because their MAIDs appeared in geofence data around classified facilities.",
-      "mitigation": "Disable background location for all apps. Deny location permission to apps that do not strictly require it. Reset MAID regularly."
-    },
-    {
-      "name": "Bluetooth Beacon Targeting (BLE)",
-      "category": "proximity targeting",
-      "precision": "1–10 meters",
-      "risk": "high",
-      "summary": "Small Bluetooth Low Energy transmitters broadcast a unique identifier. Mobile apps that have Bluetooth permission detect the beacon and report back to a server, linking the device's MAID to a precise physical location. More accurate than GPS indoors. Used in retail stores, airports, stadiums, and increasingly in government and corporate facilities for asset tracking.",
-      "how_it_works": [
-        "1. A BLE beacon is placed in a physical location.",
-        "2. A mobile app with Bluetooth permission detects the beacon's broadcast.",
-        "3. The app reports the beacon ID + MAID to an analytics or ad server.",
-        "4. The server maps the MAID to the physical location of the beacon.",
-        "5. Movement between beacons creates an indoor movement trail linked to the MAID."
-      ],
-      "real_world_impact": "Indoor tracking of individuals in buildings where GPS is unavailable. A device carried by a security official entering a sensitive facility could be tracked room-by-room if BLE infrastructure is present.",
-      "mitigation": "Disable Bluetooth scanning in location settings. Android: Settings → Location → Bluetooth scanning → OFF. iOS: turn off Bluetooth when not in use."
-    },
-    {
-      "name": "Device Fingerprinting",
-      "category": "re-identification",
-      "precision": "individual device",
-      "risk": "critical",
-      "summary": "Collects dozens of device attributes to generate a probabilistic unique identifier without relying on the MAID. Used as a fallback when the MAID is reset or unavailable. Resetting your MAID does not stop fingerprinting — the new MAID is re-linked to the old profile within days via fingerprint matching.",
-      "how_it_works": [
-        "1. SDK or browser collects: screen resolution, OS version, battery level, installed fonts, time zone, language, IP address, Wi-Fi SSID/BSSID, CPU/GPU info.",
-        "2. These signals are hashed into a fingerprint score.",
-        "3. The fingerprint is matched against known profiles in the broker's database.",
-        "4. Even after MAID reset, the fingerprint links the new MAID to the existing movement history.",
-        "5. Some SDKs also harvest IMEI, MAC address, and SIM serial number as hard identifiers."
-      ],
-      "real_world_impact": "Fingerprinting neutralizes MAID resets as a privacy protection. AccuWeather was caught transmitting Wi-Fi network names as a fingerprinting fallback even when location was disabled.",
-      "mitigation": "Limit app permissions. Use iOS (stronger sandboxing). Disable Wi-Fi scanning. Avoid apps from unknown developers. Dedicated device separation for sensitive roles."
-    },
-    {
-      "name": "Custom Audience / Matched Audience Targeting",
-      "category": "identity resolution",
-      "precision": "individual person",
-      "risk": "critical",
-      "summary": "Advertising platforms allow uploading lists of known individuals (email addresses, phone numbers, MAIDs) and matching them to platform accounts. Once matched, the individual can be served targeted content or tracked across platforms. This technique can target a specific named person's device directly — bypassing the probabilistic nature of other methods.",
-      "how_it_works": [
-        "1. An actor uploads a list of target identifiers (phone numbers, emails, MAIDs) to an ad platform.",
-        "2. The platform matches identifiers against registered accounts (hash-matching).",
-        "3. The matched devices are added to a 'custom audience' segment.",
-        "4. The actor can now serve ads to, or track the activity of, specifically those devices.",
-        "5. Combined with RTB bid stream: the actor can observe when and where those MAIDs appear."
-      ],
-      "real_world_impact": "If the phone number or email of a security official is known, their device can be added to a custom audience and their movements passively tracked via ad impression data. Also used to deliver targeted spyware via malicious ads (see: Zero-Click Ad Malware).",
-      "mitigation": "Use separate phone numbers and emails for sensitive roles. Never link work identity to consumer app accounts."
-    },
-    {
-      "name": "Zero-Click Ad Malware",
-      "category": "attack vector",
-      "precision": "individual device",
-      "risk": "critical",
-      "summary": "A cyberattack delivered silently via the advertising ecosystem. A malicious ad is served to a specific device (identified via MAID or custom audience). The ad exploits a browser or WebView vulnerability to execute code without any user interaction — no tap, no click required. This attack vector bypasses traditional phishing defenses and is used by nation-state actors.",
-      "how_it_works": [
-        "1. Attacker identifies target device via MAID (from bid stream or purchased list).",
-        "2. Attacker registers as an advertiser on a DSP platform.",
-        "3. Creates a malicious ad containing exploit code targeting a known WebView/browser vulnerability.",
-        "4. Bids to serve the ad specifically to the target MAID via RTB.",
-        "5. When the target's app loads the ad, the exploit executes silently in the background.",
-        "6. No notification, no tap, no user action required.",
-        "7. Payload can install spyware (keylogger, microphone/camera access, location tracking)."
-      ],
-      "real_world_impact": "Documented by multiple cybersecurity agencies (CISA, NCSC) as an active threat vector. Nation-state actors including groups linked to NSO Group have used ad-delivery mechanisms as initial access vectors. Particularly effective against high-value targets (government officials, military, journalists) whose MAIDs are known from data broker purchases.",
-      "mitigation": "Keep OS and apps fully updated. Use iOS (more restricted WebView). Enable Lockdown Mode on iOS for high-risk individuals. Avoid free apps with heavy advertising. Use a dedicated hardened device for sensitive work. Network-level ad blocking via MDM/DNS filtering."
-    },
-    {
-      "name": "Pattern-of-Life Analysis",
-      "category": "behavioral profiling",
-      "precision": "individual person",
-      "risk": "critical",
-      "summary": "Once a MAID has accumulated sufficient location history (typically 2–4 weeks), analysts can infer: home address (where device sleeps), work address (where device spends 8+ hours), regular routes, frequent contacts (devices that co-locate repeatedly), places of worship, medical facilities visited, and social/political affiliations. This profile is built entirely from passive location data — no hacking required.",
-      "how_it_works": [
-        "1. Broker queries MAID location history over 30–90 days.",
-        "2. Clustering algorithms identify home location (nighttime GPS centroid).",
-        "3. Work location identified (daytime GPS centroid on weekdays).",
-        "4. Route analysis maps commute patterns and timing.",
-        "5. Co-location analysis identifies devices that appear at the same places repeatedly (associates, family).",
-        "6. Venue classification tags locations: 'military base', 'government building', 'mosque', 'hospital'.",
-        "7. Full pattern-of-life report is generated for the target MAID."
-      ],
-      "real_world_impact": "The French investigation identified DGSE and DGSI agents not by hacking, but by running pattern-of-life analysis on MAIDs that regularly appeared inside classified facilities. Home addresses of operatives were then confirmed by cross-referencing the residential GPS cluster with public records.",
-      "mitigation": "Frequent MAID resets break the history chain. Device separation prevents work/personal patterns from merging. Leave personal phone at home or in Faraday bag during sensitive operations."
-    }
-  ]
-}
+[
+  {
+    "name": "Real-Time Bidding (RTB)",
+    "category": "ad ecosystem",
+    "precision": "city/neighborhood level",
+    "risk": "critical",
+    "summary": "The core mechanism by which MAIDs are distributed at scale. Every time a mobile app loads an ad, an auction runs in under 100 milliseconds. The auction broadcast \u2014 called a 'bid request' \u2014 contains the device's MAID, precise GPS coordinates, app name, and behavioral data. This broadcast is sent simultaneously to hundreds of ad buyers. Even buyers who lose the auction receive the MAID+GPS data. Bid stream data is harvested, stored, and sold by data brokers. A single user generating 100 ad impressions per day exposes their MAID to thousands of companies per week without any interaction.",
+    "how_it_works": [
+      "1. User opens an app containing an ad SDK.",
+      "2. The SDK sends a bid request to an ad exchange (Google, OpenX, AppNexus, etc.).",
+      "3. The bid request contains: MAID, GPS coordinates, app ID, device info, behavioral profile.",
+      "4. The exchange broadcasts this to 200\u2013500 demand-side platforms (DSPs) simultaneously.",
+      "5. Each DSP bids or passes \u2014 but ALL receive the full bid request including MAID+GPS.",
+      "6. The winning bidder serves the ad. Losing bidders retain the data.",
+      "7. Data brokers harvest bid stream data from multiple exchanges and aggregate it.",
+      "8. The result: a movement history linked to the MAID, built passively from ad impressions."
+    ],
+    "real_world_impact": "The Le Monde investigation into 16 million French advertising IDs was built on bid stream data. Intelligence personnel's MAIDs appeared in RTB data because their personal phones ran apps with embedded ad SDKs.",
+    "mitigation": "Delete or reset MAID. Enable ATT on iOS. Opt out of ad personalization on Android. Use apps without advertising SDKs.",
+    "id": "rtb",
+    "executive_threat": "The Le Monde investigation into 16 million French advertising IDs was built on bid stream data. Intelligence personnel's MAIDs appeared in RTB data because their personal phones ran apps with embedded ad SDKs. The bid request is sent to 200-500 buyers simultaneously.",
+    "real_world_cases": [
+      "The Le Monde investigation into 16 million French advertising IDs was built on bid stream data. Intelligence personnel's MAIDs appeared in RTB data because their personal phones ran apps with embedded ad SDKs."
+    ],
+    "countermeasures": [
+      "Delete or reset MAID. Enable ATT on iOS. Opt out of ad personalization on Android. Use apps without advertising SDKs."
+    ],
+    "passive_or_active": "ad ecosystem",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Geofencing",
+    "category": "proximity targeting",
+    "precision": "5-50 meters",
+    "risk": "high",
+    "summary": "Defines a virtual geographic boundary. Any device entering the boundary is flagged, tracked, or served targeted content. Used by advertisers to target people near stores, but also weaponized by data brokers to build lists of MAIDs that visited sensitive locations \u2014 military bases, government buildings, intelligence agency headquarters, places of worship, medical clinics.",
+    "how_it_works": [
+      "1. Advertiser or broker defines a geographic polygon (GPS coordinates).",
+      "2. Ad platform matches incoming bid requests against the polygon in real time.",
+      "3. Any MAID whose GPS coordinates fall inside the polygon is flagged.",
+      "4. The MAID is added to a custom audience list or location history.",
+      "5. The list can be used for ad targeting, identity resolution, or sold to third parties."
+    ],
+    "real_world_impact": "Locate X and Fog Riville use geofence queries as their primary interface. Law enforcement queries: 'Show me every MAID that entered this building between these dates.' French intelligence operatives were identified because their MAIDs appeared in geofence data around classified facilities.",
+    "mitigation": "Disable background location for all apps. Deny location permission to apps that do not strictly require it. Reset MAID regularly.",
+    "id": "geofencing",
+    "executive_threat": "Locate X and Fog Riville use geofence queries as their primary interface. Law enforcement queries: 'Show me every MAID that entered this building between these dates.' French intelligence operatives were identified because their MAIDs appeared in geofence data around classified facilities.",
+    "real_world_cases": [
+      "Locate X and Fog Riville use geofence queries as their primary interface. Law enforcement queries: 'Show me every MAID that entered this building between these dates.' French intelligence operatives were identified because their MAIDs appeared in geofence data around classified facilities."
+    ],
+    "countermeasures": [
+      "Disable background location for all apps. Deny location permission to apps that do not strictly require it. Reset MAID regularly."
+    ],
+    "passive_or_active": "proximity targeting",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Bluetooth Beacon Targeting (BLE)",
+    "category": "proximity targeting",
+    "precision": "1-10 meters",
+    "risk": "high",
+    "summary": "Small Bluetooth Low Energy transmitters broadcast a unique identifier. Mobile apps that have Bluetooth permission detect the beacon and report back to a server, linking the device's MAID to a precise physical location. More accurate than GPS indoors. Used in retail stores, airports, stadiums, and increasingly in government and corporate facilities for asset tracking.",
+    "how_it_works": [
+      "1. A BLE beacon is placed in a physical location.",
+      "2. A mobile app with Bluetooth permission detects the beacon's broadcast.",
+      "3. The app reports the beacon ID + MAID to an analytics or ad server.",
+      "4. The server maps the MAID to the physical location of the beacon.",
+      "5. Movement between beacons creates an indoor movement trail linked to the MAID."
+    ],
+    "real_world_impact": "Indoor tracking of individuals in buildings where GPS is unavailable. A device carried by a security official entering a sensitive facility could be tracked room-by-room if BLE infrastructure is present.",
+    "mitigation": "Disable Bluetooth scanning in location settings. Android: Settings \u2192 Location \u2192 Bluetooth scanning \u2192 OFF. iOS: turn off Bluetooth when not in use.",
+    "id": "bluetooth_beacon",
+    "executive_threat": "Indoor tracking of individuals in buildings where GPS is unavailable. A device carried by a security official entering a sensitive facility could be tracked room-by-room if BLE infrastructure is present.",
+    "real_world_cases": [
+      "Indoor tracking of individuals in buildings where GPS is unavailable. A device carried by a security official entering a sensitive facility could be tracked room-by-room if BLE infrastructure is present."
+    ],
+    "countermeasures": [
+      "Disable Bluetooth scanning in location settings. Android: Settings \u2192 Location \u2192 Bluetooth scanning \u2192 OFF. iOS: turn off Bluetooth when not in use."
+    ],
+    "passive_or_active": "proximity targeting",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Device Fingerprinting",
+    "category": "re-identification",
+    "precision": "individual device",
+    "risk": "critical",
+    "summary": "Collects dozens of device attributes to generate a probabilistic unique identifier without relying on the MAID. Used as a fallback when the MAID is reset or unavailable. Resetting your MAID does not stop fingerprinting \u2014 the new MAID is re-linked to the old profile within days via fingerprint matching.",
+    "how_it_works": [
+      "1. SDK or browser collects: screen resolution, OS version, battery level, installed fonts, time zone, language, IP address, Wi-Fi SSID/BSSID, CPU/GPU info.",
+      "2. These signals are hashed into a fingerprint score.",
+      "3. The fingerprint is matched against known profiles in the broker's database.",
+      "4. Even after MAID reset, the fingerprint links the new MAID to the existing movement history.",
+      "5. Some SDKs also harvest IMEI, MAC address, and SIM serial number as hard identifiers."
+    ],
+    "real_world_impact": "Fingerprinting neutralizes MAID resets as a privacy protection. AccuWeather was caught transmitting Wi-Fi network names as a fingerprinting fallback even when location was disabled.",
+    "mitigation": "Limit app permissions. Use iOS (stronger sandboxing). Disable Wi-Fi scanning. Avoid apps from unknown developers. Dedicated device separation for sensitive roles.",
+    "id": "device_fingerprinting",
+    "executive_threat": "Fingerprinting neutralizes MAID resets as a privacy protection. AccuWeather was caught transmitting Wi-Fi network names as a fingerprinting fallback even when location was disabled.",
+    "real_world_cases": [
+      "Fingerprinting neutralizes MAID resets as a privacy protection. AccuWeather was caught transmitting Wi-Fi network names as a fingerprinting fallback even when location was disabled."
+    ],
+    "countermeasures": [
+      "Limit app permissions. Use iOS (stronger sandboxing). Disable Wi-Fi scanning. Avoid apps from unknown developers. Dedicated device separation for sensitive roles."
+    ],
+    "passive_or_active": "re-identification",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Custom Audience / Matched Audience Targeting",
+    "category": "identity resolution",
+    "precision": "individual person",
+    "risk": "critical",
+    "summary": "Advertising platforms allow uploading lists of known individuals (email addresses, phone numbers, MAIDs) and matching them to platform accounts. Once matched, the individual can be served targeted content or tracked across platforms. This technique can target a specific named person's device directly \u2014 bypassing the probabilistic nature of other methods.",
+    "how_it_works": [
+      "1. An actor uploads a list of target identifiers (phone numbers, emails, MAIDs) to an ad platform.",
+      "2. The platform matches identifiers against registered accounts (hash-matching).",
+      "3. The matched devices are added to a 'custom audience' segment.",
+      "4. The actor can now serve ads to, or track the activity of, specifically those devices.",
+      "5. Combined with RTB bid stream: the actor can observe when and where those MAIDs appear."
+    ],
+    "real_world_impact": "If the phone number or email of a security official is known, their device can be added to a custom audience and their movements passively tracked via ad impression data. Also used to deliver targeted spyware via malicious ads (see: Zero-Click Ad Malware).",
+    "mitigation": "Use separate phone numbers and emails for sensitive roles. Never link work identity to consumer app accounts.",
+    "id": "custom_audience",
+    "executive_threat": "If the phone number or email of a security official is known, their device can be added to a custom audience and their movements passively tracked via ad impression data. Also used to deliver targeted spyware via malicious ads (see: Zero-Click Ad Malware).",
+    "real_world_cases": [
+      "If the phone number or email of a security official is known, their device can be added to a custom audience and their movements passively tracked via ad impression data. Also used to deliver targeted spyware via malicious ads (see: Zero-Click Ad Malware)."
+    ],
+    "countermeasures": [
+      "Use separate phone numbers and emails for sensitive roles. Never link work identity to consumer app accounts."
+    ],
+    "passive_or_active": "identity resolution",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Zero-Click Ad Malware",
+    "category": "attack vector",
+    "precision": "individual device",
+    "risk": "critical",
+    "summary": "A cyberattack delivered silently via the advertising ecosystem. A malicious ad is served to a specific device (identified via MAID or custom audience). The ad exploits a browser or WebView vulnerability to execute code without any user interaction \u2014 no tap, no click required. This attack vector bypasses traditional phishing defenses and is used by nation-state actors.",
+    "how_it_works": [
+      "1. Attacker identifies target device via MAID (from bid stream or purchased list).",
+      "2. Attacker registers as an advertiser on a DSP platform.",
+      "3. Creates a malicious ad containing exploit code targeting a known WebView/browser vulnerability.",
+      "4. Bids to serve the ad specifically to the target MAID via RTB.",
+      "5. When the target's app loads the ad, the exploit executes silently in the background.",
+      "6. No notification, no tap, no user action required.",
+      "7. Payload can install spyware (keylogger, microphone/camera access, location tracking)."
+    ],
+    "real_world_impact": "Documented by multiple cybersecurity agencies (CISA, NCSC) as an active threat vector. Nation-state actors including groups linked to NSO Group have used ad-delivery mechanisms as initial access vectors. Particularly effective against high-value targets (government officials, military, journalists) whose MAIDs are known from data broker purchases.",
+    "mitigation": "Keep OS and apps fully updated. Use iOS (more restricted WebView). Enable Lockdown Mode on iOS for high-risk individuals. Avoid free apps with heavy advertising. Use a dedicated hardened device for sensitive work. Network-level ad blocking via MDM/DNS filtering.",
+    "id": "zero_click_malware",
+    "executive_threat": "Documented by multiple cybersecurity agencies (CISA, NCSC) as an active threat vector. Nation-state actors including groups linked to NSO Group have used ad-delivery mechanisms as initial access vectors. Particularly effective against high-value targets (government officials, military, journalists) whose MAIDs are known from data broker purchases.",
+    "real_world_cases": [
+      "Documented by multiple cybersecurity agencies (CISA, NCSC) as an active threat vector. Nation-state actors including groups linked to NSO Group have used ad-delivery mechanisms as initial access vectors. Particularly effective against high-value targets (government officials, military, journalists) whose MAIDs are known from data broker purchases."
+    ],
+    "countermeasures": [
+      "Keep OS and apps fully updated. Use iOS (more restricted WebView). Enable Lockdown Mode on iOS for high-risk individuals. Avoid free apps with heavy advertising. Use a dedicated hardened device for sensitive work. Network-level ad blocking via MDM/DNS filtering."
+    ],
+    "passive_or_active": "attack vector",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  },
+  {
+    "name": "Pattern-of-Life Analysis",
+    "category": "behavioral profiling",
+    "precision": "individual person",
+    "risk": "critical",
+    "summary": "Once a MAID has accumulated sufficient location history (typically 2\u20134 weeks), analysts can infer: home address (where device sleeps), work address (where device spends 8+ hours), regular routes, frequent contacts (devices that co-locate repeatedly), places of worship, medical facilities visited, and social/political affiliations. This profile is built entirely from passive location data \u2014 no hacking required.",
+    "how_it_works": [
+      "1. Broker queries MAID location history over 30\u201390 days.",
+      "2. Clustering algorithms identify home location (nighttime GPS centroid).",
+      "3. Work location identified (daytime GPS centroid on weekdays).",
+      "4. Route analysis maps commute patterns and timing.",
+      "5. Co-location analysis identifies devices that appear at the same places repeatedly (associates, family).",
+      "6. Venue classification tags locations: 'military base', 'government building', 'mosque', 'hospital'.",
+      "7. Full pattern-of-life report is generated for the target MAID."
+    ],
+    "real_world_impact": "The French investigation identified DGSE and DGSI agents not by hacking, but by running pattern-of-life analysis on MAIDs that regularly appeared inside classified facilities. Home addresses of operatives were then confirmed by cross-referencing the residential GPS cluster with public records.",
+    "mitigation": "Frequent MAID resets break the history chain. Device separation prevents work/personal patterns from merging. Leave personal phone at home or in Faraday bag during sensitive operations.",
+    "id": "pattern_of_life",
+    "executive_threat": "The French investigation identified DGSE and DGSI agents not by hacking, but by running pattern-of-life analysis on MAIDs that regularly appeared inside classified facilities. Home addresses of operatives were then confirmed by cross-referencing the residential GPS cluster with public records.",
+    "real_world_cases": [
+      "The French investigation identified DGSE and DGSI agents not by hacking, but by running pattern-of-life analysis on MAIDs that regularly appeared inside classified facilities. Home addresses of operatives were then confirmed by cross-referencing the residential GPS cluster with public records."
+    ],
+    "countermeasures": [
+      "Frequent MAID resets break the history chain. Device separation prevents work/personal patterns from merging. Leave personal phone at home or in Faraday bag during sensitive operations."
+    ],
+    "passive_or_active": "behavioral profiling",
+    "latency": "Milliseconds",
+    "cost_per_exposure": "Varies"
+  }
+]

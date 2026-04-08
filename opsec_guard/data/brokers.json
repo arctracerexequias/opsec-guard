@@ -1,130 +1,319 @@
-{
-  "brokers": [
-    {
-      "name": "X-Mode / Outlogic",
-      "risk": "critical",
-      "data_types": ["MAID", "precise GPS", "movement history"],
-      "known_clients": ["US Department of Defense", "JSOC", "NGA", "DHS", "commercial advertisers"],
-      "opt_out_url": "https://outlogic.io/opt-out/",
-      "incident": "Sold MAID+GPS of 400M+ devices including Muslim prayer app users to US military. Banned from app stores Dec 2020.",
-      "sources": ["Vice/Motherboard Nov 2020"]
-    },
-    {
-      "name": "Cuebiq",
-      "risk": "high",
-      "data_types": ["MAID", "precise GPS", "venue visits", "movement patterns"],
-      "known_clients": ["hedge funds", "retail chains", "advertisers", "academic research institutions"],
-      "opt_out_url": "https://www.cuebiq.com/privacypolicy/opt-out-of-data-collection/",
-      "incident": "Data sold to hedge funds for consumer foot-traffic investment analysis. Powered The Weather Channel FTC complaint.",
-      "sources": ["NYT Privacy Project Dec 2018"]
-    },
-    {
-      "name": "SafeGraph",
-      "risk": "critical",
-      "data_types": ["MAID", "precise GPS", "place of worship visits", "clinic visits", "home address inference"],
-      "known_clients": ["CDC", "US government agencies", "hedge funds", "retailers"],
-      "opt_out_url": "https://www.safegraph.com/data-privacy",
-      "incident": "Sold location data showing visits to abortion clinics, places of worship, and protest sites. Removed from Google Cloud Marketplace Jun 2021.",
-      "sources": ["Vice/Motherboard Jun 2021"]
-    },
-    {
-      "name": "Veraset",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "movement patterns"],
-      "known_clients": ["CDC (COVID surveillance)", "US law enforcement", "commercial clients"],
-      "opt_out_url": "https://www.veraset.com/privacy/",
-      "incident": "Sold location data to CDC for COVID-19 mobility surveillance without individual consent. Law enforcement access via commercial contracts, bypassing warrants.",
-      "sources": ["Protocol 2021", "FOIA documents 2021"]
-    },
-    {
-      "name": "Kochava",
-      "risk": "critical",
-      "data_types": ["MAID", "GPS", "app usage", "behavioral profiles"],
-      "known_clients": ["advertisers", "law enforcement (Kochava Collective)"],
-      "opt_out_url": "https://www.kochava.com/support-privacy/",
-      "incident": "FTC lawsuit Aug 2022 for selling MAID-linked data exposing visits to reproductive health clinics, addiction centers, and military installations.",
-      "sources": ["FTC v. Kochava Aug 2022"]
-    },
-    {
-      "name": "Placer.ai",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "foot-traffic patterns", "home/work inference"],
-      "known_clients": ["retail chains", "commercial real estate", "hedge funds"],
-      "opt_out_url": "https://www.placer.ai/privacy-policy/",
-      "incident": "Received Life360 MAID+GPS data to provide retail foot-traffic analytics, including data from minors.",
-      "sources": ["The Markup Dec 2021"]
-    },
-    {
-      "name": "Foursquare (data division)",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "venue visits", "dwell time"],
-      "known_clients": ["hedge funds", "advertisers", "retailers", "financial analytics firms"],
-      "opt_out_url": "https://foursquare.com/legal/privacy/opt-out/",
-      "incident": "Pilgrim SDK harvests location from 40M+ monthly devices. Foot-traffic data sold to financial firms for investment signals.",
-      "sources": ["WSJ 2019"]
-    },
-    {
-      "name": "Near Intelligence",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "behavioral profiles"],
-      "known_clients": ["government agencies", "retailers", "advertisers"],
-      "opt_out_url": "https://near.com/privacy/",
-      "incident": "Claims data on 1.6B people across 44 countries. Sells to both commercial and government clients globally.",
-      "sources": ["Near.com marketing materials 2022"]
-    },
-    {
-      "name": "Babel Street",
-      "risk": "critical",
-      "data_types": ["MAID", "GPS", "social media", "behavioral profiles"],
-      "known_clients": ["US law enforcement", "intelligence agencies", "DHS", "FBI", "Secret Service"],
-      "opt_out_url": null,
-      "incident": "Sells 'Locate X' product — real-time MAID tracking for law enforcement. Used to track visitors to abortion clinics in restrictive US states. Secret Service purchased access.",
-      "sources": ["Vice/Motherboard Feb 2020", "Motherboard Sep 2020", "Protocol 2021"]
-    },
-    {
-      "name": "Venntel (Subsidiary of Gravy Analytics)",
-      "risk": "critical",
-      "data_types": ["MAID", "GPS", "movement history"],
-      "known_clients": ["DHS", "ICE", "CBP", "FBI", "DEA"],
-      "opt_out_url": "https://gravyanalytics.com/privacy/",
-      "incident": "Sold MAID location data to DHS/ICE for immigration enforcement, bypassing warrant requirement. $2M annual contract with DHS documented via FOIA.",
-      "sources": ["Vice/Motherboard Feb 2020", "Senate oversight investigation 2020"]
-    },
-    {
-      "name": "Acxiom",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "demographic profiles", "purchase history"],
-      "known_clients": ["Fortune 500 companies", "financial institutions", "political campaigns"],
-      "opt_out_url": "https://www.acxiom.com/about-acxiom/privacy/us-consumer-opt-out/",
-      "incident": "One of the oldest and largest data brokers. Links MAID to offline identity records across 2.5B people globally.",
-      "sources": ["FTC data broker study 2014", "multiple GDPR investigations"]
-    },
-    {
-      "name": "LexisNexis Risk Solutions",
-      "risk": "high",
-      "data_types": ["MAID", "GPS", "identity data", "financial data"],
-      "known_clients": ["law enforcement", "insurers", "financial institutions"],
-      "opt_out_url": "https://optout.lexisnexis.com/",
-      "incident": "Sells MAID-linked identity resolution and location history to law enforcement. Data used in predictive policing systems.",
-      "sources": ["Electronic Frontier Foundation analysis 2021"]
-    },
-    {
-      "name": "Fog Riville (Fog Data Science)",
-      "risk": "critical",
-      "data_types": ["MAID", "precise GPS", "movement history", "pattern-of-life analysis"],
-      "known_clients": ["US federal law enforcement", "local police departments", "immigration enforcement"],
-      "opt_out_url": null,
-      "incident": "Sells a product called 'Fog Reveal' — a web-based tool allowing law enforcement to search MAID-linked location histories of millions of devices. Marketed as requiring no warrant. Used to build pattern-of-life profiles on individuals by querying their MAID movement history. Named specifically in the Le Monde/French investigation into advertising ID surveillance ecosystems.",
-      "sources": ["EFF investigation August 2022", "Associated Press August 2022", "Le Monde MAID investigation 2024"]
-    },
-    {
-      "name": "Locate X (Babel Street)",
-      "risk": "critical",
-      "data_types": ["MAID", "real-time GPS", "historical movement", "geofence queries"],
-      "known_clients": ["US Secret Service", "DHS", "CBP", "FBI", "military intelligence units"],
-      "opt_out_url": null,
-      "incident": "Real-time MAID tracking platform sold exclusively to government and law enforcement. Allows geofence queries — 'show me every MAID that entered this building in the last 30 days.' Used to track visitors to abortion clinics, mosques, and protest sites. Named in Le Monde investigation alongside Fog Riville as commercial MAID surveillance products.",
-      "sources": ["Vice/Motherboard February 2020", "Protocol 2021", "Le Monde MAID investigation 2024"]
-    }
-  ]
-}
+[
+  {
+    "name": "X-Mode / Outlogic",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "precise GPS",
+      "movement history"
+    ],
+    "known_clients": [
+      "US Department of Defense",
+      "JSOC",
+      "NGA",
+      "DHS",
+      "commercial advertisers"
+    ],
+    "opt_out_url": "https://outlogic.io/opt-out/",
+    "incident": "Sold MAID+GPS of 400M+ devices including Muslim prayer app users to US military. Banned from app stores Dec 2020.",
+    "sources": [
+      "Vice/Motherboard Nov 2020"
+    ]
+  },
+  {
+    "name": "Cuebiq",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "precise GPS",
+      "venue visits",
+      "movement patterns"
+    ],
+    "known_clients": [
+      "hedge funds",
+      "retail chains",
+      "advertisers",
+      "academic research institutions"
+    ],
+    "opt_out_url": "https://www.cuebiq.com/privacypolicy/opt-out-of-data-collection/",
+    "incident": "Data sold to hedge funds for consumer foot-traffic investment analysis. Powered The Weather Channel FTC complaint.",
+    "sources": [
+      "NYT Privacy Project Dec 2018"
+    ]
+  },
+  {
+    "name": "SafeGraph",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "precise GPS",
+      "place of worship visits",
+      "clinic visits",
+      "home address inference"
+    ],
+    "known_clients": [
+      "CDC",
+      "US government agencies",
+      "hedge funds",
+      "retailers"
+    ],
+    "opt_out_url": "https://www.safegraph.com/data-privacy",
+    "incident": "Sold location data showing visits to abortion clinics, places of worship, and protest sites. Removed from Google Cloud Marketplace Jun 2021.",
+    "sources": [
+      "Vice/Motherboard Jun 2021"
+    ]
+  },
+  {
+    "name": "Veraset",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "movement patterns"
+    ],
+    "known_clients": [
+      "CDC (COVID surveillance)",
+      "US law enforcement",
+      "commercial clients"
+    ],
+    "opt_out_url": "https://www.veraset.com/privacy/",
+    "incident": "Sold location data to CDC for COVID-19 mobility surveillance without individual consent. Law enforcement access via commercial contracts, bypassing warrants.",
+    "sources": [
+      "Protocol 2021",
+      "FOIA documents 2021"
+    ]
+  },
+  {
+    "name": "Kochava",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "app usage",
+      "behavioral profiles"
+    ],
+    "known_clients": [
+      "advertisers",
+      "law enforcement (Kochava Collective)"
+    ],
+    "opt_out_url": "https://www.kochava.com/support-privacy/",
+    "incident": "FTC lawsuit Aug 2022 for selling MAID-linked data exposing visits to reproductive health clinics, addiction centers, and military installations.",
+    "sources": [
+      "FTC v. Kochava Aug 2022"
+    ]
+  },
+  {
+    "name": "Placer.ai",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "foot-traffic patterns",
+      "home/work inference"
+    ],
+    "known_clients": [
+      "retail chains",
+      "commercial real estate",
+      "hedge funds"
+    ],
+    "opt_out_url": "https://www.placer.ai/privacy-policy/",
+    "incident": "Received Life360 MAID+GPS data to provide retail foot-traffic analytics, including data from minors.",
+    "sources": [
+      "The Markup Dec 2021"
+    ]
+  },
+  {
+    "name": "Foursquare (data division)",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "venue visits",
+      "dwell time"
+    ],
+    "known_clients": [
+      "hedge funds",
+      "advertisers",
+      "retailers",
+      "financial analytics firms"
+    ],
+    "opt_out_url": "https://foursquare.com/legal/privacy/opt-out/",
+    "incident": "Pilgrim SDK harvests location from 40M+ monthly devices. Foot-traffic data sold to financial firms for investment signals.",
+    "sources": [
+      "WSJ 2019"
+    ]
+  },
+  {
+    "name": "Near Intelligence",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "behavioral profiles"
+    ],
+    "known_clients": [
+      "government agencies",
+      "retailers",
+      "advertisers"
+    ],
+    "opt_out_url": "https://near.com/privacy/",
+    "incident": "Claims data on 1.6B people across 44 countries. Sells to both commercial and government clients globally.",
+    "sources": [
+      "Near.com marketing materials 2022"
+    ]
+  },
+  {
+    "name": "Babel Street",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "social media",
+      "behavioral profiles"
+    ],
+    "known_clients": [
+      "US law enforcement",
+      "intelligence agencies",
+      "DHS",
+      "FBI",
+      "Secret Service"
+    ],
+    "opt_out_url": null,
+    "incident": "Sells 'Locate X' product \u2014 real-time MAID tracking for law enforcement. Used to track visitors to abortion clinics in restrictive US states. Secret Service purchased access.",
+    "sources": [
+      "Vice/Motherboard Feb 2020",
+      "Motherboard Sep 2020",
+      "Protocol 2021"
+    ]
+  },
+  {
+    "name": "Venntel (Subsidiary of Gravy Analytics)",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "movement history"
+    ],
+    "known_clients": [
+      "DHS",
+      "ICE",
+      "CBP",
+      "FBI",
+      "DEA"
+    ],
+    "opt_out_url": "https://gravyanalytics.com/privacy/",
+    "incident": "Sold MAID location data to DHS/ICE for immigration enforcement, bypassing warrant requirement. $2M annual contract with DHS documented via FOIA.",
+    "sources": [
+      "Vice/Motherboard Feb 2020",
+      "Senate oversight investigation 2020"
+    ]
+  },
+  {
+    "name": "Acxiom",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "demographic profiles",
+      "purchase history"
+    ],
+    "known_clients": [
+      "Fortune 500 companies",
+      "financial institutions",
+      "political campaigns"
+    ],
+    "opt_out_url": "https://www.acxiom.com/about-acxiom/privacy/us-consumer-opt-out/",
+    "incident": "One of the oldest and largest data brokers. Links MAID to offline identity records across 2.5B people globally.",
+    "sources": [
+      "FTC data broker study 2014",
+      "multiple GDPR investigations"
+    ]
+  },
+  {
+    "name": "LexisNexis Risk Solutions",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "GPS",
+      "identity data",
+      "financial data"
+    ],
+    "known_clients": [
+      "law enforcement",
+      "insurers",
+      "financial institutions"
+    ],
+    "opt_out_url": "https://optout.lexisnexis.com/",
+    "incident": "Sells MAID-linked identity resolution and location history to law enforcement. Data used in predictive policing systems.",
+    "sources": [
+      "Electronic Frontier Foundation analysis 2021"
+    ]
+  },
+  {
+    "name": "Fog Riville (Fog Data Science)",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "precise GPS",
+      "movement history",
+      "pattern-of-life analysis"
+    ],
+    "known_clients": [
+      "US federal law enforcement",
+      "local police departments",
+      "immigration enforcement"
+    ],
+    "opt_out_url": null,
+    "incident": "Sells a product called 'Fog Reveal' \u2014 a web-based tool allowing law enforcement to search MAID-linked location histories of millions of devices. Marketed as requiring no warrant. Used to build pattern-of-life profiles on individuals by querying their MAID movement history. Named specifically in the Le Monde/French investigation into advertising ID surveillance ecosystems.",
+    "sources": [
+      "EFF investigation August 2022",
+      "Associated Press August 2022",
+      "Le Monde MAID investigation 2024"
+    ]
+  },
+  {
+    "name": "Locate X (Babel Street)",
+    "risk": "critical",
+    "data_types": [
+      "MAID",
+      "real-time GPS",
+      "historical movement",
+      "geofence queries"
+    ],
+    "known_clients": [
+      "US Secret Service",
+      "DHS",
+      "CBP",
+      "FBI",
+      "military intelligence units"
+    ],
+    "opt_out_url": null,
+    "incident": "Real-time MAID tracking platform sold exclusively to government and law enforcement. Allows geofence queries \u2014 'show me every MAID that entered this building in the last 30 days.' Used to track visitors to abortion clinics, mosques, and protest sites. Named in Le Monde investigation alongside Fog Riville as commercial MAID surveillance products.",
+    "sources": [
+      "Vice/Motherboard February 2020",
+      "Protocol 2021",
+      "Le Monde MAID investigation 2024"
+    ]
+  },
+  {
+    "name": "Oracle Data Cloud (BlueKai / Datalogix)",
+    "risk": "high",
+    "data_types": [
+      "MAID",
+      "Purchase data",
+      "Demographic",
+      "Online behavior"
+    ],
+    "known_clients": [
+      "Advertisers",
+      "Political campaigns"
+    ],
+    "opt_out_url": "https://datacloudoptout.oracle.com/",
+    "opt_out_method": "Web form",
+    "rtb_participant": true,
+    "government_contractor": false,
+    "risk_level": "High",
+    "notes": "7B+ consumer profiles. BlueKai data breach 2020 exposed billions of records publicly.",
+    "incident": "BlueKai data breach 2020 exposed billions of MAID-linked records publicly."
+  }
+]

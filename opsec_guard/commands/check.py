@@ -1,156 +1,188 @@
+"""Check apps and brokers from local database with live source lookup."""
+from __future__ import annotations
 import json
 from pathlib import Path
+from typing import Optional
+
+import typer
 from rich.panel import Panel
 from rich.table import Table
-from rich.rule import Rule
-from opsec_guard.utils.display import console, risk_badge
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+from ..utils.display import console, risk_color, score_color
+from ..sources.manager import fetch_merged_profile
 
+app = typer.Typer(help="Check app and broker risk profiles.")
 
-def _load_db() -> tuple[list, list, list]:
-    apps    = json.loads((DATA_DIR / "apps.json").read_text())["apps"]
-    sdks    = json.loads((DATA_DIR / "sdks.json").read_text())["sdks"]
-    brokers = json.loads((DATA_DIR / "brokers.json").read_text())["brokers"]
-    return apps, sdks, brokers
+APPS_FILE = Path(__file__).parent.parent / "data" / "apps.json"
+SDKS_FILE = Path(__file__).parent.parent / "data" / "sdks.json"
+BROKERS_FILE = Path(__file__).parent.parent / "data" / "brokers.json"
 
 
-def _fuzzy_match(query: str, name: str) -> bool:
-    q = query.lower().strip()
-    n = name.lower()
-    return q in n or n in q or any(word in n for word in q.split() if len(word) > 3)
+def _load_apps() -> list[dict]:
+    data = json.loads(APPS_FILE.read_text())
+    if isinstance(data, dict):
+        return data.get("apps", [])
+    return data
 
 
-def _print_app(app: dict, detailed: bool) -> None:
-    console.print()
-    console.print(Panel.fit(
-        f"[bold]{app['name']}[/bold]  {risk_badge(app['risk'])}\n"
-        f"[dim]Package: {app['package']}  |  Category: {app['category']}[/dim]",
-        border_style=_border(app["risk"])
-    ))
-
-    console.print(f"  [bold]Summary:[/bold] {app['summary']}")
-    console.print()
-
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Field", style="bold cyan", width=28)
-    table.add_column("Value")
-
-    yn = lambda b: "[red]YES[/red]" if b else "[green]NO[/green]"
-    gps = f"{app['gps_precision_meters']}m" if app['gps_precision_meters'] else "N/A"
-
-    table.add_row("Collects MAID",           yn(app["collects_maid"]))
-    table.add_row("Links MAID to GPS",        yn(app["links_maid_to_gps"]))
-    table.add_row("GPS precision",            gps)
-    table.add_row("Background location",      yn(app["background_location"]))
-    table.add_row("Fingerprinting fallback",  yn(app["maid_fallback_fingerprinting"]))
-
-    if app["brokers"]:
-        table.add_row("Known data brokers", ", ".join(app["brokers"]))
-    else:
-        table.add_row("Known data brokers", "[dim]None documented[/dim]")
-
-    if detailed:
-        table.add_row("Sources", "\n".join(app["sources"]))
-
-    console.print(table)
-    console.print()
+def _load_brokers() -> list[dict]:
+    data = json.loads(BROKERS_FILE.read_text())
+    if isinstance(data, dict):
+        return data.get("brokers", [])
+    return data
 
 
-def _print_sdk(sdk: dict, detailed: bool) -> None:
-    console.print()
-    console.print(Panel.fit(
-        f"[bold]{sdk['name']}[/bold]  {risk_badge(sdk['risk'])}  [dim](SDK)[/dim]\n"
-        f"[dim]Category: {sdk['category']}[/dim]",
-        border_style=_border(sdk["risk"])
-    ))
-
-    console.print(f"  [bold]Summary:[/bold] {sdk['summary']}")
-    console.print()
-
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Field", style="bold cyan", width=28)
-    table.add_column("Value")
-
-    yn = lambda b: "[red]YES[/red]" if b else "[green]NO[/green]"
-
-    table.add_row("Reads MAID",                  yn(sdk["reads_maid"]))
-    table.add_row("Transmits MAID+GPS",           yn(sdk["transmits_maid_gps"]))
-    table.add_row("RTB participant",              yn(sdk["rtb_participant"]))
-    table.add_row("Fingerprinting fallback",      yn(sdk["fingerprinting_fallback"]))
-    table.add_row("Known clients / embedded in",  ", ".join(sdk["clients"]) if sdk["clients"] else "[dim]Unknown[/dim]")
-
-    if detailed:
-        table.add_row("Sources", "\n".join(sdk["sources"]))
-
-    console.print(table)
-    console.print()
+def _load_sdks() -> list[dict]:
+    data = json.loads(SDKS_FILE.read_text())
+    if isinstance(data, dict):
+        return data.get("sdks", [])
+    return data
 
 
-def _print_broker(broker: dict, detailed: bool) -> None:
-    console.print()
-    console.print(Panel.fit(
-        f"[bold]{broker['name']}[/bold]  {risk_badge(broker['risk'])}  [dim](Data Broker)[/dim]",
-        border_style=_border(broker["risk"])
-    ))
+@app.command("app")
+def check_app(
+    query: str = typer.Argument(..., help="App name or package ID to look up"),
+    live: bool = typer.Option(False, "--live", "-l", help="Query live external sources"),
+    appcensus_key: Optional[str] = typer.Option(None, "--appcensus-key", help="AppCensus API key"),
+):
+    """Check an app's MAID risk profile."""
+    apps = _load_apps()
+    query_lower = query.lower()
 
-    console.print(f"  [bold]Incident:[/bold] {broker['incident']}")
-    console.print()
+    matches = [
+        a for a in apps
+        if query_lower in a.get("name", "").lower()
+        or query_lower in a.get("package_android", "").lower()
+        or query_lower in a.get("bundle_ios", "").lower()
+        or query_lower in a.get("package", "").lower()
+    ]
 
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Field", style="bold cyan", width=28)
-    table.add_column("Value")
-
-    table.add_row("Data types",    ", ".join(broker["data_types"]))
-    table.add_row("Known clients", ", ".join(broker["known_clients"]))
-
-    if broker["opt_out_url"]:
-        table.add_row("Opt-out URL", broker["opt_out_url"])
-    else:
-        table.add_row("Opt-out URL", "[red]None available[/red]")
-
-    if detailed:
-        table.add_row("Sources", "\n".join(broker["sources"]))
-
-    console.print(table)
-    console.print()
-
-
-def _border(risk: str) -> str:
-    return {"critical": "red", "high": "orange1", "medium": "yellow", "low": "green"}.get(risk, "white")
-
-
-def run_check(app_name: str, detailed: bool) -> None:
-    apps, sdks, brokers = _load_db()
-
-    app_hits    = [a for a in apps    if _fuzzy_match(app_name, a["name"]) or _fuzzy_match(app_name, a.get("package", ""))]
-    sdk_hits    = [s for s in sdks    if _fuzzy_match(app_name, s["name"])]
-    broker_hits = [b for b in brokers if _fuzzy_match(app_name, b["name"])]
-
-    total = len(app_hits) + len(sdk_hits) + len(broker_hits)
-
-    console.print()
-    if total == 0:
-        console.print(Panel.fit(
-            f"[bold]'{app_name}'[/bold] — [green]Not found in MAID threat database[/green]\n\n"
-            "[dim]This doesn't mean the app is safe — it may simply not be documented yet.\n"
-            "Check the app's privacy policy for mentions of advertising identifiers,\n"
-            "MAID, IDFA, GAID, or third-party SDKs like AppLovin, ironSource, or Braze.[/dim]",
-            border_style="green"
-        ))
+    if not matches and live:
+        console.print(f"[dim]Not in local DB. Querying live sources for: {query}[/dim]")
+        profile = fetch_merged_profile(query, appcensus_key=appcensus_key)
+        if profile:
+            _print_live_profile(profile)
+        else:
+            console.print(f"[warn]No data found for: {query}[/warn]")
         return
 
-    console.print(Rule(f"[bold]Results for '{app_name}'[/bold] — {total} match(es) found"))
+    if not matches:
+        console.print(
+            f"[warn]'{query}' not in local database.[/warn]\n"
+            f"[dim]Try: opsec-guard check app {query} --live[/dim]"
+        )
+        return
 
-    for app in app_hits:
-        _print_app(app, detailed)
+    for app_data in matches:
+        _print_app(app_data)
 
-    for sdk in sdk_hits:
-        _print_sdk(sdk, detailed)
 
-    for broker in broker_hits:
-        _print_broker(broker, detailed)
+def _get_risk_score(a: dict) -> int:
+    """Get risk score from either new (risk_score) or old (risk) field."""
+    if "risk_score" in a:
+        return int(a["risk_score"])
+    risk_map = {"critical": 90, "high": 70, "medium": 50, "low": 20}
+    return risk_map.get(str(a.get("risk", "")).lower(), 0)
 
-    if not detailed:
-        console.print("[dim]Run with [bold]--detailed[/bold] to see source citations.[/dim]")
-    console.print()
+
+def _print_app(a: dict) -> None:
+    score = _get_risk_score(a)
+    color = score_color(score)
+
+    table = Table(title=f"{a.get('name', '?')} — Risk Score: {score}/100", show_header=False, show_lines=False)
+    table.add_column("Field", style="dim", width=28)
+    table.add_column("Value")
+
+    def yn(v): return "[critical]YES[/critical]" if v else "[ok]No[/ok]"
+
+    table.add_row("Risk Score", f"[{color}]{score}/100[/{color}]")
+    pkg = a.get("package_android") or a.get("package", "—")
+    bundle = a.get("bundle_ios", "—")
+    table.add_row("Package (Android)", pkg)
+    if bundle and bundle != "—":
+        table.add_row("Bundle (iOS)", bundle)
+    table.add_row("Collects MAID", yn(a.get("collects_maid")))
+    table.add_row("Links MAID to GPS", yn(a.get("links_maid_to_gps")))
+    if a.get("gps_precision_meters"):
+        table.add_row("GPS Precision", f"{a['gps_precision_meters']}m")
+    table.add_row("Background Location", yn(a.get("background_location")))
+    table.add_row("RTB Participant", yn(a.get("rtb_participant")))
+    table.add_row("Fingerprinting Fallback", yn(a.get("maid_fallback_fingerprinting")))
+    sdks = a.get("sdks", [])
+    if sdks:
+        table.add_row("SDKs", ", ".join(sdks))
+    brokers = a.get("brokers", [])
+    if brokers:
+        table.add_row("Brokers", ", ".join(brokers))
+
+    console.print(table)
+
+    exec_risk = a.get("executive_risk") or a.get("summary", "")
+    if exec_risk:
+        exec_color = "critical" if score >= 80 else "high" if score >= 60 else "medium"
+        console.print(
+            Panel(exec_risk, title="[exec]Executive Risk Context[/exec]", border_style=exec_color)
+        )
+
+
+def _print_live_profile(profile) -> None:
+    color = score_color(profile.risk_score or 0)
+    table = Table(
+        title=f"{profile.app_name} (live) — Risk Score: {profile.risk_score or '?'}/100",
+        show_header=False, show_lines=False,
+    )
+    table.add_column("Field", style="dim", width=28)
+    table.add_column("Value")
+
+    def yn(v): return "[critical]YES[/critical]" if v else "[ok]No[/ok]" if v is not None else "[dim]Unknown[/dim]"
+
+    table.add_row("Source", profile.source)
+    table.add_row("Platform", profile.platform)
+    table.add_row("Collects MAID", yn(profile.collects_maid))
+    table.add_row("Links MAID to GPS", yn(profile.links_maid_to_gps))
+    table.add_row("Background Location", yn(profile.background_location))
+    table.add_row("RTB Participant", yn(profile.rtb_participant))
+    table.add_row("Fingerprinting", yn(profile.maid_fallback_fingerprinting))
+    if profile.sdks:
+        table.add_row("SDKs", ", ".join(profile.sdks[:6]))
+    console.print(table)
+
+
+@app.command("broker")
+def check_broker(
+    query: str = typer.Argument(..., help="Broker name to look up"),
+):
+    """Check a data broker's profile and opt-out instructions."""
+    brokers = _load_brokers()
+    query_lower = query.lower()
+    matches = [b for b in brokers if query_lower in b.get("name", "").lower()]
+
+    if not matches:
+        console.print(f"[warn]Broker '{query}' not found in database.[/warn]")
+        return
+
+    for b in matches:
+        rl = b.get("risk_level") or b.get("risk", "Medium")
+        rl_str = rl.capitalize() if isinstance(rl, str) else "Medium"
+        color = risk_color(rl_str)
+        table = Table(title=b["name"], show_header=False, show_lines=False)
+        table.add_column("Field", style="dim", width=25)
+        table.add_column("Value")
+
+        table.add_row("Risk Level", f"[{color}]{rl_str}[/{color}]")
+        table.add_row("Country", b.get("country", "—"))
+        data_types = b.get("data_types", b.get("data_types", []))
+        if data_types:
+            table.add_row("Data Types", ", ".join(data_types))
+        clients = b.get("clients") or b.get("known_clients", [])
+        if clients:
+            table.add_row("Clients", ", ".join(clients))
+        table.add_row("Govt Contractor", "[warn]YES[/warn]" if b.get("government_contractor") else "No")
+        table.add_row("RTB Participant", "[warn]YES[/warn]" if b.get("rtb_participant") else "No")
+        opt_out = b.get("opt_out_url") or b.get("opt_out_method", "No opt-out available")
+        if opt_out:
+            table.add_row("Opt-Out", str(opt_out))
+        notes = b.get("notes") or b.get("incident", "")
+        if notes:
+            table.add_row("Notes", notes[:120])
+        console.print(table)

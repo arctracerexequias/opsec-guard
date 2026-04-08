@@ -1,184 +1,264 @@
-{
-  "sdks": [
-    {
-      "name": "X-Mode (Outlogic)",
-      "risk": "critical",
-      "category": "location data broker SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["US military contractors (JSOC, NGA)", "hedge funds", "advertisers"],
-      "summary": "SDK embedded in apps to harvest MAID+GPS. Sold data to US military and government contractors. Banned by Apple and Google in Dec 2020 after Vice investigation.",
-      "sources": ["Vice/Motherboard Nov 2020", "App store bans Dec 2020"]
-    },
-    {
-      "name": "Cuebiq",
-      "risk": "high",
-      "category": "location analytics SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["The Weather Channel", "GasBuddy", "hedge funds", "advertisers", "academic researchers"],
-      "summary": "Harvests MAID+precise GPS in background. Cuebiq panel reaches 40M+ US devices. Sells movement data to hedge funds (store-visit analytics) and advertisers.",
-      "sources": ["NYT Privacy Project 2018", "Cuebiq SDK documentation"]
-    },
-    {
-      "name": "Foursquare Pilgrim SDK",
-      "risk": "high",
-      "category": "venue detection / location SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["GasBuddy", "food delivery apps", "retail apps", "financial analytics firms"],
-      "summary": "Continuously detects venue visits (restaurants, stores, offices) by correlating MAID with GPS. Data sold as foot-traffic intelligence.",
-      "sources": ["WSJ 2019", "Foursquare Pilgrim SDK docs"]
-    },
-    {
-      "name": "Kochava",
-      "risk": "critical",
-      "category": "mobile attribution / data broker",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": true,
-      "clients": ["advertisers", "law enforcement (via Kochava Collective)"],
-      "summary": "FTC sued Kochava 2022 for selling MAID-linked location data revealing visits to reproductive health clinics, addiction centers, and places of worship.",
-      "sources": ["FTC v. Kochava Aug 2022"]
-    },
-    {
-      "name": "Facebook Audience Network SDK",
-      "risk": "high",
-      "category": "social advertising SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": true,
-      "fingerprinting_fallback": true,
-      "clients": ["Meta advertising ecosystem"],
-      "summary": "Transmits MAID from third-party apps back to Meta. Enables cross-app tracking even for non-Facebook users. Participates in RTB auctions, exposing MAID to hundreds of bidders.",
-      "sources": ["CNIL fine 2022", "Northeastern University study 2018"]
-    },
-    {
-      "name": "Google AdMob / Mobile Ads SDK",
-      "risk": "medium",
-      "category": "advertising SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": true,
-      "fingerprinting_fallback": true,
-      "clients": ["Google advertising ecosystem"],
-      "summary": "Most widely deployed advertising SDK. Reads Android GAID (MAID) and IDFA on iOS. Transmits MAID through Google's RTB infrastructure to thousands of buyers.",
-      "sources": ["Google SDK privacy documentation"]
-    },
-    {
-      "name": "AppLovin MAX",
-      "risk": "medium",
-      "category": "advertising mediation SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": true,
-      "fingerprinting_fallback": true,
-      "clients": ["mobile game publishers", "advertisers globally"],
-      "summary": "Advertising mediation platform. MAID passed to all integrated demand partners simultaneously during ad auctions, distributing it to dozens of third parties per impression.",
-      "sources": ["AppLovin privacy policy", "GDPR audit 2022"]
-    },
-    {
-      "name": "ironSource (Unity LevelPlay)",
-      "risk": "medium",
-      "category": "advertising mediation SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": true,
-      "fingerprinting_fallback": true,
-      "clients": ["mobile game publishers"],
-      "summary": "Merged with Unity in 2022. MAID shared across Unity's advertising network. Widely embedded in free-to-play mobile games.",
-      "sources": ["ironSource privacy policy"]
-    },
-    {
-      "name": "Reveal Mobile",
-      "risk": "critical",
-      "category": "location advertising SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": true,
-      "clients": ["AccuWeather", "media companies"],
-      "summary": "Transmits MAID+GPS even when OS-level location permission is denied by scanning visible WiFi networks. Documented in AccuWeather case 2017.",
-      "sources": ["Will Strafach / Sudo Security Group 2017"]
-    },
-    {
-      "name": "Arity (Allstate subsidiary)",
-      "risk": "high",
-      "category": "driving analytics SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": true,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["insurance companies", "Life360"],
-      "summary": "Embedded in apps to collect MAID + precise driving routes. Data sold to insurers to adjust premiums without users realizing their driving app feeds insurance databases.",
-      "sources": ["NYT investigation Mar 2024", "The Markup Dec 2021"]
-    },
-    {
-      "name": "Adjust",
-      "risk": "medium",
-      "category": "mobile attribution SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": false,
-      "fingerprinting_fallback": true,
-      "clients": ["thousands of app developers globally"],
-      "summary": "Mobile attribution SDK that reads and stores MAID for install and event attribution. MAID transmitted to Adjust servers and accessible to app developers.",
-      "sources": ["Adjust privacy policy"]
-    },
-    {
-      "name": "Branch",
-      "risk": "medium",
-      "category": "deep linking / attribution SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": false,
-      "fingerprinting_fallback": true,
-      "clients": ["e-commerce, fintech, lifestyle apps"],
-      "summary": "Reads MAID for cross-channel attribution. Uses device fingerprinting as fallback when MAID is unavailable (iOS ATT opt-out).",
-      "sources": ["Branch privacy policy"]
-    },
-    {
-      "name": "Braze",
-      "risk": "medium",
-      "category": "customer engagement / marketing SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["Grindr", "Lyft", "Flightradar24", "major consumer apps"],
-      "summary": "CRM/marketing SDK that links MAID to user profiles for push notifications and geofencing campaigns. MAID stored in Braze cloud.",
-      "sources": ["Braze privacy policy"]
-    },
-    {
-      "name": "Amplitude",
-      "risk": "low",
-      "category": "product analytics SDK",
-      "reads_maid": false,
-      "transmits_maid_gps": false,
-      "rtb_participant": false,
-      "fingerprinting_fallback": false,
-      "clients": ["product teams across all verticals"],
-      "summary": "Product analytics SDK. Does not read MAID by default and uses its own device ID. Generally considered privacy-respecting relative to advertising SDKs.",
-      "sources": ["Amplitude privacy policy"]
-    },
-    {
-      "name": "Snap Audience Network SDK",
-      "risk": "medium",
-      "category": "social advertising SDK",
-      "reads_maid": true,
-      "transmits_maid_gps": false,
-      "rtb_participant": true,
-      "fingerprinting_fallback": false,
-      "clients": ["Snap advertising ecosystem"],
-      "summary": "Reads MAID for cross-app ad targeting within Snapchat's audience network. MAID transmitted during RTB auctions.",
-      "sources": ["Snap privacy policy"]
-    }
-  ]
-}
+[
+  {
+    "name": "X-Mode (Outlogic)",
+    "risk": "critical",
+    "category": "location data broker SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "US military contractors (JSOC, NGA)",
+      "hedge funds",
+      "advertisers"
+    ],
+    "summary": "SDK embedded in apps to harvest MAID+GPS. Sold data to US military and government contractors. Banned by Apple and Google in Dec 2020 after Vice investigation.",
+    "sources": [
+      "Vice/Motherboard Nov 2020",
+      "App store bans Dec 2020"
+    ]
+  },
+  {
+    "name": "Cuebiq",
+    "risk": "high",
+    "category": "location analytics SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "The Weather Channel",
+      "GasBuddy",
+      "hedge funds",
+      "advertisers",
+      "academic researchers"
+    ],
+    "summary": "Harvests MAID+precise GPS in background. Cuebiq panel reaches 40M+ US devices. Sells movement data to hedge funds (store-visit analytics) and advertisers.",
+    "sources": [
+      "NYT Privacy Project 2018",
+      "Cuebiq SDK documentation"
+    ]
+  },
+  {
+    "name": "Foursquare Pilgrim SDK",
+    "risk": "high",
+    "category": "venue detection / location SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "GasBuddy",
+      "food delivery apps",
+      "retail apps",
+      "financial analytics firms"
+    ],
+    "summary": "Continuously detects venue visits (restaurants, stores, offices) by correlating MAID with GPS. Data sold as foot-traffic intelligence.",
+    "sources": [
+      "WSJ 2019",
+      "Foursquare Pilgrim SDK docs"
+    ]
+  },
+  {
+    "name": "Kochava",
+    "risk": "critical",
+    "category": "mobile attribution / data broker",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "advertisers",
+      "law enforcement (via Kochava Collective)"
+    ],
+    "summary": "FTC sued Kochava 2022 for selling MAID-linked location data revealing visits to reproductive health clinics, addiction centers, and places of worship.",
+    "sources": [
+      "FTC v. Kochava Aug 2022"
+    ]
+  },
+  {
+    "name": "Facebook Audience Network SDK",
+    "risk": "high",
+    "category": "social advertising SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": true,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "Meta advertising ecosystem"
+    ],
+    "summary": "Transmits MAID from third-party apps back to Meta. Enables cross-app tracking even for non-Facebook users. Participates in RTB auctions, exposing MAID to hundreds of bidders.",
+    "sources": [
+      "CNIL fine 2022",
+      "Northeastern University study 2018"
+    ]
+  },
+  {
+    "name": "Google AdMob / Mobile Ads SDK",
+    "risk": "medium",
+    "category": "advertising SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": true,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "Google advertising ecosystem"
+    ],
+    "summary": "Most widely deployed advertising SDK. Reads Android GAID (MAID) and IDFA on iOS. Transmits MAID through Google's RTB infrastructure to thousands of buyers.",
+    "sources": [
+      "Google SDK privacy documentation"
+    ]
+  },
+  {
+    "name": "AppLovin MAX",
+    "risk": "medium",
+    "category": "advertising mediation SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": true,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "mobile game publishers",
+      "advertisers globally"
+    ],
+    "summary": "Advertising mediation platform. MAID passed to all integrated demand partners simultaneously during ad auctions, distributing it to dozens of third parties per impression.",
+    "sources": [
+      "AppLovin privacy policy",
+      "GDPR audit 2022"
+    ]
+  },
+  {
+    "name": "ironSource (Unity LevelPlay)",
+    "risk": "medium",
+    "category": "advertising mediation SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": true,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "mobile game publishers"
+    ],
+    "summary": "Merged with Unity in 2022. MAID shared across Unity's advertising network. Widely embedded in free-to-play mobile games.",
+    "sources": [
+      "ironSource privacy policy"
+    ]
+  },
+  {
+    "name": "Reveal Mobile",
+    "risk": "critical",
+    "category": "location advertising SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "AccuWeather",
+      "media companies"
+    ],
+    "summary": "Transmits MAID+GPS even when OS-level location permission is denied by scanning visible WiFi networks. Documented in AccuWeather case 2017.",
+    "sources": [
+      "Will Strafach / Sudo Security Group 2017"
+    ]
+  },
+  {
+    "name": "Arity (Allstate subsidiary)",
+    "risk": "high",
+    "category": "driving analytics SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": true,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "insurance companies",
+      "Life360"
+    ],
+    "summary": "Embedded in apps to collect MAID + precise driving routes. Data sold to insurers to adjust premiums without users realizing their driving app feeds insurance databases.",
+    "sources": [
+      "NYT investigation Mar 2024",
+      "The Markup Dec 2021"
+    ]
+  },
+  {
+    "name": "Adjust",
+    "risk": "medium",
+    "category": "mobile attribution SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": false,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "thousands of app developers globally"
+    ],
+    "summary": "Mobile attribution SDK that reads and stores MAID for install and event attribution. MAID transmitted to Adjust servers and accessible to app developers.",
+    "sources": [
+      "Adjust privacy policy"
+    ]
+  },
+  {
+    "name": "Branch",
+    "risk": "medium",
+    "category": "deep linking / attribution SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": false,
+    "fingerprinting_fallback": true,
+    "clients": [
+      "e-commerce, fintech, lifestyle apps"
+    ],
+    "summary": "Reads MAID for cross-channel attribution. Uses device fingerprinting as fallback when MAID is unavailable (iOS ATT opt-out).",
+    "sources": [
+      "Branch privacy policy"
+    ]
+  },
+  {
+    "name": "Braze",
+    "risk": "medium",
+    "category": "customer engagement / marketing SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "Grindr",
+      "Lyft",
+      "Flightradar24",
+      "major consumer apps"
+    ],
+    "summary": "CRM/marketing SDK that links MAID to user profiles for push notifications and geofencing campaigns. MAID stored in Braze cloud.",
+    "sources": [
+      "Braze privacy policy"
+    ]
+  },
+  {
+    "name": "Amplitude",
+    "risk": "low",
+    "category": "product analytics SDK",
+    "reads_maid": false,
+    "transmits_maid_gps": false,
+    "rtb_participant": false,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "product teams across all verticals"
+    ],
+    "summary": "Product analytics SDK. Does not read MAID by default and uses its own device ID. Generally considered privacy-respecting relative to advertising SDKs.",
+    "sources": [
+      "Amplitude privacy policy"
+    ]
+  },
+  {
+    "name": "Snap Audience Network SDK",
+    "risk": "medium",
+    "category": "social advertising SDK",
+    "reads_maid": true,
+    "transmits_maid_gps": false,
+    "rtb_participant": true,
+    "fingerprinting_fallback": false,
+    "clients": [
+      "Snap advertising ecosystem"
+    ],
+    "summary": "Reads MAID for cross-app ad targeting within Snapchat's audience network. MAID transmitted during RTB auctions.",
+    "sources": [
+      "Snap privacy policy"
+    ]
+  }
+]

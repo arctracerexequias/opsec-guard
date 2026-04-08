@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Bonifacio Global City (BGC) — Philippine Stock Exchange",
+    "lat": 14.5515,
+    "lon": 121.0476,
+    "radius_meters": 500,
+    "risk_level": "High",
+    "reason": "High concentration of corporate executives; known RTB geofencing by financial data brokers",
+    "country": "PH"
+  },
+  {
+    "name": "Makati Central Business District",
+    "lat": 14.5547,
+    "lon": 121.0244,
+    "radius_meters": 1000,
+    "risk_level": "High",
+    "reason": "Highest executive density in Philippines; multiple known geofencing campaigns targeting C-suite",
+    "country": "PH"
+  },
+  {
+    "name": "NAIA Terminal 1 / 2 / 3",
+    "lat": 14.5086,
+    "lon": 121.0197,
+    "radius_meters": 1000,
+    "risk_level": "Critical",
+    "reason": "Airport transit exposes MAID to international broker networks; travel pattern intelligence collection common",
+    "country": "PH"
+  },
+  {
+    "name": "Manila Hotel / Sofitel Manila",
+    "lat": 14.5904,
+    "lon": 120.9748,
+    "radius_meters": 300,
+    "risk_level": "High",
+    "reason": "Government and diplomatic events venue; documented MAID harvesting at high-profile events",
+    "country": "PH"
+  },
+  {
+    "name": "Ortigas Center",
+    "lat": 14.5875,
+    "lon": 121.0578,
+    "radius_meters": 800,
+    "risk_level": "Medium",
+    "reason": "Second-tier corporate hub; telecom company HQs present (PLDT, Globe); data retention concerns",
+    "country": "PH"
+  },
+  {
+    "name": "House of Representatives / Senate of the Philippines",
+    "lat": 14.6760,
+    "lon": 121.0486,
+    "radius_meters": 500,
+    "risk_level": "Critical",
+    "reason": "Government facility; foreign intelligence interest; documented surveillance operations",
+    "country": "PH"
+  },
+  {
+    "name": "Malacañang Palace",
+    "lat": 14.5958,
+    "lon": 120.9930,
+    "radius_meters": 300,
+    "risk_level": "Critical",
+    "reason": "Presidential complex; highest foreign intelligence interest; no-device policy should be enforced",
+    "country": "PH"
+  },
+  {
+    "name": "Camp Aguinaldo / Camp Crame",
+    "lat": 14.6133,
+    "lon": 121.0576,
+    "radius_meters": 500,
+    "risk_level": "Critical",
+    "reason": "AFP/PNP headquarters; any MAID detected in proximity flagged by foreign intelligence services",
+    "country": "PH"
+  },
+  {
+    "name": "Marina Bay Sands (Singapore)",
+    "lat": 1.2834,
+    "lon": 103.8607,
+    "radius_meters": 500,
+    "risk_level": "High",
+    "reason": "ASEAN summit venue; high-value corporate conference location; known broker geofencing",
+    "country": "SG"
+  },
+  {
+    "name": "Davao City — DICT Regional Office / City Hall",
+    "lat": 7.0644,
+    "lon": 125.6078,
+    "radius_meters": 400,
+    "risk_level": "High",
+    "reason": "Government ICT hub in Mindanao; proximity surveillance concerns",
+    "country": "PH"
+  }
+]

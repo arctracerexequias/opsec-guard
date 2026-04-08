@@ -1,144 +1,62 @@
-"""
-Google Play Store source — uses google-play-scraper (PyPI).
-Extracts: data safety section, declared permissions, app metadata.
-No API key required.
-"""
+"""Google Play Store — app permissions and data safety labels."""
 from __future__ import annotations
-from opsec_guard.sources.base import BaseSource, AppRiskProfile
-from opsec_guard.utils import cache
-
-# Data safety categories from Google Play that indicate MAID/location risk
-MAID_DATA_TYPES = {
-    "device or other ids",
-    "advertising id",
-    "precise location",
-    "approximate location",
-}
-
-SHARED_DATA_HIGH_RISK = {
-    "advertising or marketing",
-    "analytics",
-    "third-party advertising",
-}
+from ..utils.cache import get as cache_get, set as cache_set
+from .base import BaseSource, AppRiskProfile
 
 
 class GooglePlaySource(BaseSource):
-    name     = "google_play"
-    platform = "android"
+    name = "google_play"
 
-    def __init__(self) -> None:
-        self._available: bool | None = None
-
-    def available(self) -> bool:
-        if self._available is None:
-            try:
-                import google_play_scraper  # noqa: F401
-                self._available = True
-            except ImportError:
-                self._available = False
-        return self._available
-
-    def fetch(self, query: str) -> AppRiskProfile | None:
-        if not self.available():
+    def fetch(self, package_id: str, platform: str = "android") -> AppRiskProfile | None:
+        if platform != "android":
             return None
 
-        cached = cache.get(self.name, query)
+        cache_key = f"gplay:{package_id}"
+        cached = cache_get(cache_key)
         if cached:
-            return _from_dict(cached)
+            return self._parse(package_id, cached)
 
-        profile = self._fetch_by_id(query) or self._fetch_by_search(query)
-        if profile:
-            cache.set(self.name, query, profile.to_dict())
-        return profile
-
-    def _fetch_by_id(self, package: str) -> AppRiskProfile | None:
-        if "." not in package:
-            return None
         try:
-            from google_play_scraper import app
-            data = app(package, lang="en", country="us")
-            return _build_profile(data)
+            from google_play_scraper import app as gplay_app, permissions
+            details = gplay_app(package_id, lang="en", country="ph")
+            try:
+                perms = permissions(package_id, lang="en")
+                all_perms = [p for group in perms.values() for p in group] if perms else []
+            except Exception:
+                all_perms = []
+            data = {**details, "_permissions": all_perms}
+            cache_set(cache_key, data)
+        except ImportError:
+            return None
         except Exception:
             return None
 
-    def _fetch_by_search(self, name: str) -> AppRiskProfile | None:
-        try:
-            from google_play_scraper import search
-            results = search(name, n_hits=3, lang="en", country="us")
-            if not results:
-                return None
-            # Best match = first result
-            from google_play_scraper import app
-            data = app(results[0]["appId"], lang="en", country="us")
-            return _build_profile(data)
-        except Exception:
-            return None
+        return self._parse(package_id, data)
 
+    def _parse(self, package_id: str, data: dict) -> AppRiskProfile:
+        permissions_list = data.get("_permissions", [])
+        has_fine_loc = "ACCESS_FINE_LOCATION" in permissions_list
+        has_bg_loc = "ACCESS_BACKGROUND_LOCATION" in permissions_list
+        has_ad_id = "READ_ADVERTISING_ID" in permissions_list or "AD_ID" in permissions_list
 
-def _build_profile(data: dict) -> AppRiskProfile:
-    package    = data.get("appId", "")
-    name       = data.get("title", package)
-    permissions = data.get("permissions", []) or []
+        risk_score = 0
+        if has_fine_loc:
+            risk_score += 30
+        if has_bg_loc:
+            risk_score += 25
+        if has_ad_id:
+            risk_score += 20
+        risk_score = min(risk_score, 100)
 
-    # Data safety section (newer Play Store field)
-    data_safety = data.get("dataSafety", {}) or {}
-    collected   = []
-    shared      = []
-
-    for item in data_safety.get("dataCollected", []):
-        cat = item.get("category", "").lower()
-        collected.append(item.get("category", ""))
-        if cat in MAID_DATA_TYPES:
-            collected.append(f"[MAID-linked] {item.get('category', '')}")
-
-    for item in data_safety.get("dataShared", []):
-        cat = item.get("category", "").lower()
-        purpose = item.get("purposes", [])
-        shared.append(item.get("category", ""))
-        for p in purpose:
-            if p.lower() in SHARED_DATA_HIGH_RISK:
-                shared.append(f"[HIGH-RISK share] {item.get('category','')} → {p}")
-
-    # Infer MAID risk
-    maid_risk = any(
-        d.lower() in MAID_DATA_TYPES or "advertising id" in d.lower()
-        for d in collected + shared
-    )
-
-    findings = []
-    if maid_risk:
-        findings.append("Google Play data safety: declares collection/sharing of advertising ID or precise location.")
-    if any("advertising" in s.lower() for s in shared):
-        findings.append("Google Play: data shared for advertising/marketing purposes — typical MAID broker pipeline.")
-
-    # Sensitive permissions from Play (if returned)
-    sensitive_perms = [p for p in permissions if any(k in str(p).upper() for k in
-        ["LOCATION", "PHONE_STATE", "AD_ID", "BLUETOOTH_SCAN", "WIFI_STATE"])]
-
-    return AppRiskProfile(
-        name=name,
-        package=package,
-        platform="android",
-        maid_risk=maid_risk or None,
-        permissions=sensitive_perms,
-        data_collected=[c for c in collected if "[MAID-linked]" not in c],
-        data_shared=[s for s in shared if "[HIGH-RISK share]" not in s],
-        findings=findings,
-        sources_checked=["google_play"],
-        sources_hit=["google_play"],
-        raw={"google_play": {
-            "appId": package,
-            "title": name,
-            "developer": data.get("developer", ""),
-            "score": data.get("score"),
-            "installs": data.get("installs"),
-        }},
-    )
-
-
-def _from_dict(d: dict) -> AppRiskProfile:
-    p = AppRiskProfile(name=d.get("name", ""))
-    for k, v in d.items():
-        if hasattr(p, k):
-            setattr(p, k, v)
-    return p
+        return AppRiskProfile(
+            app_name=data.get("title", package_id),
+            package_id=package_id,
+            platform="android",
+            collects_maid=has_ad_id or risk_score >= 40,
+            links_maid_to_gps=has_fine_loc and (has_ad_id or risk_score >= 40),
+            background_location=has_bg_loc,
+            permissions=permissions_list,
+            risk_score=risk_score,
+            source="google_play",
+            raw=data,
+        )

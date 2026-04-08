@@ -2,6 +2,8 @@
 from __future__ import annotations
 import uuid
 import json
+import csv
+import io as _io
 import qrcode
 import io
 from datetime import datetime, timezone
@@ -218,6 +220,263 @@ def setup_agent(
         )
     )
     _print_qr_setup(person_id, platform, server_url)
+
+
+CSV_TEMPLATE_ROWS = [
+    ["name", "email", "role", "tier", "platform", "security_officer_email"],
+    ["Juan dela Cruz", "juan@corp.com", "CEO", "executive", "android", "cso@corp.com"],
+    ["Maria Santos", "maria@corp.com", "CFO", "executive", "ios", "cso@corp.com"],
+    ["Pedro Reyes", "pedro@corp.com", "IT Staff", "standard", "android", ""],
+    ["Ana Garcia", "ana@corp.com", "Legal Counsel", "standard", "ios", ""],
+]
+
+CSV_REQUIRED = {"name", "email"}
+CSV_OPTIONAL = {
+    "role": "",
+    "tier": "standard",
+    "platform": "android",
+    "security_officer_email": None,
+}
+
+
+def _build_record(row: dict) -> dict:
+    """Build a personnel record from a CSV row dict."""
+    tier = row.get("tier", "standard").strip().lower()
+    if tier not in ("standard", "executive"):
+        tier = "standard"
+    platform = row.get("platform", "android").strip().lower()
+    if platform not in ("android", "ios"):
+        platform = "android"
+    officer = row.get("security_officer_email", "").strip() or None
+
+    return {
+        "id": str(uuid.uuid4())[:8].upper(),
+        "name": row["name"].strip(),
+        "email": row["email"].strip(),
+        "role": row.get("role", "").strip(),
+        "tier": tier,
+        "platform": platform,
+        "security_officer_email": officer,
+        "enrolled_at": datetime.now(timezone.utc).isoformat(),
+        "consent_given": True,
+        "consent_timestamp": datetime.now(timezone.utc).isoformat(),
+        "active": True,
+    }
+
+
+@app.command("import")
+def import_csv(
+    csv_file: Path = typer.Argument(..., help="Path to CSV file"),
+    skip_existing: bool = typer.Option(True, "--skip-existing/--update-existing",
+                                        help="Skip rows whose email is already enrolled"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without saving"),
+    no_confirm: bool = typer.Option(False, "--yes", "-y", help="Skip consent confirmation"),
+):
+    """Bulk enroll personnel from a CSV file."""
+    if not csv_file.exists():
+        console.print(f"[critical]File not found: {csv_file}[/critical]")
+        raise typer.Exit(1)
+
+    try:
+        with open(csv_file, newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+    except Exception as e:
+        console.print(f"[critical]Cannot read CSV: {e}[/critical]")
+        raise typer.Exit(1)
+
+    if not rows:
+        console.print("[warn]CSV file is empty.[/warn]")
+        return
+
+    # Validate required columns
+    headers = {h.strip().lower() for h in (rows[0].keys() if rows else [])}
+    missing = CSV_REQUIRED - headers
+    if missing:
+        console.print(f"[critical]Missing required columns: {', '.join(missing)}[/critical]")
+        console.print(f"[dim]Required: name, email  |  Optional: role, tier, platform, security_officer_email[/dim]")
+        raise typer.Exit(1)
+
+    # Normalise header names (strip whitespace, lowercase)
+    rows = [{k.strip().lower(): v for k, v in row.items()} for row in rows]
+
+    # Load existing to check for duplicates by email
+    existing_personnel = load_personnel()
+    existing_emails = {r.get("email", "").lower() for r in existing_personnel}
+
+    # Preview table
+    table = Table(title=f"CSV Import Preview — {len(rows)} rows", show_lines=True)
+    table.add_column("#", width=4, style="dim")
+    table.add_column("Name")
+    table.add_column("Email")
+    table.add_column("Role", style="dim")
+    table.add_column("Tier", width=16)
+    table.add_column("Platform", width=10)
+    table.add_column("Status", width=14)
+
+    valid_rows = []
+    skipped = 0
+    errors = 0
+
+    for i, row in enumerate(rows, 1):
+        name = row.get("name", "").strip()
+        email = row.get("email", "").strip()
+
+        if not name or not email:
+            status = "[critical]Missing name/email[/critical]"
+            errors += 1
+        elif "@" not in email:
+            status = "[critical]Invalid email[/critical]"
+            errors += 1
+        elif email.lower() in existing_emails and skip_existing:
+            status = "[warn]Already enrolled[/warn]"
+            skipped += 1
+        else:
+            status = "[ok]Ready[/ok]"
+            valid_rows.append(row)
+
+        tier = row.get("tier", "standard").strip().lower()
+        table.add_row(
+            str(i),
+            name,
+            email,
+            row.get("role", ""),
+            tier_badge(tier if tier in ("standard", "executive") else "standard"),
+            row.get("platform", "android"),
+            status,
+        )
+
+    console.print(table)
+    console.print(
+        f"\n[ok]{len(valid_rows)} to enroll[/ok]  "
+        f"[warn]{skipped} already enrolled[/warn]  "
+        f"[critical]{errors} errors[/critical]"
+    )
+
+    if not valid_rows:
+        console.print("[dim]Nothing to enroll.[/dim]")
+        return
+
+    if dry_run:
+        console.print("\n[dim]Dry run — no changes made. Remove --dry-run to enroll.[/dim]")
+        return
+
+    # Consent confirmation (one batch consent for CSV imports)
+    console.print(
+        Panel(
+            "[bold]Batch Consent Declaration[/bold]\n\n"
+            "By proceeding, you confirm that all personnel listed in this CSV\n"
+            "have been individually informed of the monitoring program and have\n"
+            "given their explicit consent as required by:\n"
+            "  • PH DPA RA 10173 Sec. 12(a)\n"
+            "  • GDPR Art. 6(1)(a)\n\n"
+            "Consent records will be stored with each personnel entry.",
+            border_style="yellow",
+        )
+    )
+
+    if not no_confirm:
+        if not Confirm.ask("[warn]Confirm that all listed personnel have consented?[/warn]"):
+            console.print("[warn]Import cancelled.[/warn]")
+            return
+
+    # Enroll
+    enrolled = []
+    failed = []
+    for row in valid_rows:
+        try:
+            record = _build_record(row)
+            enroll_personnel(record)
+            enrolled.append(record)
+        except Exception as e:
+            failed.append((row.get("name", "?"), str(e)))
+
+    # Results table
+    result_table = Table(title=f"Enrollment Results — {len(enrolled)} enrolled", show_lines=True)
+    result_table.add_column("ID", style="bold cyan", width=10)
+    result_table.add_column("Name")
+    result_table.add_column("Email", style="dim")
+    result_table.add_column("Tier", width=16)
+
+    for r in enrolled:
+        result_table.add_row(
+            r["id"],
+            r["name"],
+            r["email"],
+            tier_badge(r["tier"]),
+        )
+
+    console.print(result_table)
+
+    if failed:
+        for name, err in failed:
+            console.print(f"[critical]Failed: {name} — {err}[/critical]")
+
+    console.print(
+        f"\n[ok]{len(enrolled)} personnel enrolled successfully.[/ok]"
+        + (f"\n[dim]Export IDs with: opsec-guard enroll export[/dim]" if enrolled else "")
+    )
+
+
+@app.command("template")
+def csv_template(
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save to file (default: print to screen)"),
+):
+    """Print or save a CSV template for bulk enrollment."""
+    buf = _io.StringIO()
+    writer = csv.writer(buf)
+    for row in CSV_TEMPLATE_ROWS:
+        writer.writerow(row)
+    content = buf.getvalue()
+
+    if output:
+        output.write_text(content)
+        console.print(f"[ok]Template saved: {output}[/ok]")
+        console.print(f"[dim]Edit and import with: opsec-guard enroll import {output}[/dim]")
+    else:
+        console.print("[bold]CSV template (copy and save as personnel.csv):[/bold]\n")
+        console.print(content)
+        console.print(
+            "[dim]Columns:\n"
+            "  name*                    Full name\n"
+            "  email*                   Email address  (* required)\n"
+            "  role                     Job title\n"
+            "  tier                     standard | executive\n"
+            "  platform                 android | ios\n"
+            "  security_officer_email   Escalation target (executive tier)[/dim]"
+        )
+
+
+@app.command("export")
+def export_enrolled(
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Save to file"),
+    include_ids: bool = typer.Option(True, "--ids/--no-ids", help="Include generated IDs"),
+):
+    """Export enrolled personnel list as CSV."""
+    records = load_personnel()
+    if not records:
+        console.print("[dim]No personnel enrolled.[/dim]")
+        return
+
+    fields = ["id", "name", "email", "role", "tier", "platform", "security_officer_email", "enrolled_at"]
+    if not include_ids:
+        fields = [f for f in fields if f != "id"]
+
+    buf = _io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for r in records:
+        writer.writerow({f: r.get(f, "") for f in fields})
+
+    content = buf.getvalue()
+
+    if output:
+        output.write_text(content)
+        console.print(f"[ok]Exported {len(records)} records to: {output}[/ok]")
+    else:
+        # Write directly to stdout — no Rich formatting, safe for piping
+        import sys
+        sys.stdout.write(content)
 
 
 def _agent_instructions(person_id: str, server_url: str, platform: str) -> str:

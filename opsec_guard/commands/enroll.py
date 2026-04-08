@@ -191,13 +191,18 @@ def remove_person(
 @app.command("setup-agent")
 def setup_agent(
     person_id: str = typer.Argument(..., help="Personnel ID"),
-    server_url: str = typer.Option(..., "--server", "-s", help="Monitoring server HTTPS URL"),
+    server_url: Optional[str] = typer.Option(None, "--server", "-s", help="Monitoring server URL (auto-detected if omitted)"),
 ):
     """Print device agent setup instructions for a personnel member."""
+    from ..server.run import get_server_url
     person = get_personnel(person_id)
     if not person:
         console.print(f"[warn]Personnel ID {person_id} not found.[/warn]")
         raise typer.Exit(1)
+
+    if not server_url:
+        server_url = get_server_url()
+        console.print(f"[dim]Using server URL from config: {server_url}[/dim]")
 
     platform = person.get("platform", "android")
     name = person.get("name", "")

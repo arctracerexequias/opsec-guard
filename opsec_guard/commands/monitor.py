@@ -8,12 +8,12 @@ import typer
 from rich.table import Table
 from rich.live import Live
 from rich.panel import Panel
-from rich.columns import Columns
 
 from ..utils.display import console, tier_badge, risk_color
 from ..utils.storage import load_personnel, latest_report_per_device, load_device_reports
 from ..utils.geo import check_flagged_locations
 from ..utils.alerts import send_executive_alert
+from ..server.run import ensure_server_running, get_server_url, DEFAULT_PORT
 
 app = typer.Typer(help="Real-time device monitoring dashboard.")
 
@@ -164,9 +164,21 @@ def watch(
     refresh: int = typer.Option(10, "--refresh", "-r", help="Refresh interval in seconds"),
     alerts: bool = typer.Option(True, "--alerts/--no-alerts", help="Send email alerts"),
     person_id: Optional[str] = typer.Option(None, "--id", help="Filter to specific personnel ID"),
+    port: int = typer.Option(DEFAULT_PORT, "--port", "-p", help="Server port"),
+    ssl_cert: Optional[str] = typer.Option(None, "--cert", help="TLS cert for auto-started server"),
+    ssl_key: Optional[str] = typer.Option(None, "--key", help="TLS key for auto-started server"),
 ):
-    """Live monitoring dashboard with auto-refresh."""
-    console.print("[info]Starting live monitor... Press Ctrl+C to exit.[/info]")
+    """Live monitoring dashboard — auto-starts the monitoring server if not running."""
+    # Auto-start server
+    already_running, server_url = ensure_server_running(
+        port=port, ssl_cert=ssl_cert, ssl_key=ssl_key
+    )
+    if already_running:
+        console.print(f"[ok]Server already running:[/ok] [dim]{server_url}[/dim]")
+    else:
+        console.print(f"[ok]Server started:[/ok] [dim]{server_url}[/dim]")
+    console.print(f"[dim]Agent reports to: {server_url}/report[/dim]")
+    console.print("[dim]Press Ctrl+C to stop monitor (server keeps running in background)[/dim]\n")
 
     with Live(console=console, refresh_per_second=1) as live:
         while True:
@@ -204,6 +216,13 @@ def status(
     person_id: Optional[str] = typer.Argument(None, help="Personnel ID (omit for all)"),
 ):
     """Show current device status snapshot."""
+    from ..server.run import is_port_open, DEFAULT_PORT
+    server_up = is_port_open(port=DEFAULT_PORT)
+    url = get_server_url()
+    console.print(
+        f"[{'ok' if server_up else 'warn'}]Server: {'UP' if server_up else 'DOWN'} — {url}[/{'ok' if server_up else 'warn'}]"
+    )
+
     personnel = load_personnel()
     if not personnel:
         console.print("[dim]No personnel enrolled. Use: opsec-guard enroll add[/dim]")
@@ -218,3 +237,33 @@ def status(
     device_reports = latest_report_per_device()
     pid_reports = {r.get("person_id", ""): r for r in device_reports.values()}
     console.print(_build_table(personnel, pid_reports))
+
+
+@app.command("server-stop")
+def server_stop():
+    """Stop the background monitoring server."""
+    import signal
+    from ..server.run import DEFAULT_PORT, _load_server_config
+    cfg = _load_server_config()
+    port = cfg.get("port", DEFAULT_PORT)
+
+    # Find and kill the uvicorn process bound to our port
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["fuser", f"{port}/tcp"],
+            capture_output=True, text=True,
+        )
+        pids = result.stdout.strip().split()
+        if not pids:
+            console.print(f"[dim]No server process found on port {port}.[/dim]")
+            return
+        for pid in pids:
+            try:
+                import os
+                os.kill(int(pid), signal.SIGTERM)
+            except (ProcessLookupError, ValueError):
+                pass
+        console.print(f"[ok]Server stopped (port {port}).[/ok]")
+    except FileNotFoundError:
+        console.print("[warn]fuser not available. Kill the server process manually.[/warn]")
